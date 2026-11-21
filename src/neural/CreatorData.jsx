@@ -1,6 +1,8 @@
 import React, {useCallback, useEffect, useMemo, useState} from 'react';
 import {Icon} from './icons';
-import {PageHead} from './pages';
+function CreatorPageHead({zh, en, sub, subEn}) {
+  return <header className="page-head"><div><p className="eyebrow">{en.toUpperCase()} <span>{zh}</span></p><h1>{sub}</h1><p className="page-sub">{subEn}</p></div></header>;
+}
 
 const API = '/api/creator';
 const STORAGE = 'neural-creator-data-token-v1';
@@ -99,7 +101,7 @@ export function CreatorData() {
   const historyRows = useMemo(()=>accountHistory.slice(0,12),[accountHistory]);
 
   return <div className="page page-creator">
-    <PageHead zh="账号数据" en="Creator Data" sub="把每次成长记录下来。" subEn="Manual records, private trends — no platform scraping."/>
+    <CreatorPageHead zh="账号数据" en="Creator Data" sub="把每次成长记录下来。" subEn="Manual records, private trends — no platform scraping."/>
     <section className="creator-token glass">
       <div><h3><Icon name="lock" size={14}/>私人数据连接 <em>Private access</em></h3><p>数据接口需要你在 Cloudflare 设置访问密钥。密钥仅保存于当前浏览器。</p></div>
       <div className="creator-token-input"><input type="password" autoComplete="off" placeholder="生成或粘贴 CREATOR_DATA_API_TOKEN" value={tokenDraft} onChange={e=>setTokenDraft(e.target.value)}/><button className="pill" type="button" onClick={generateToken}>生成</button><button className="pill" type="button" onClick={copyToken} disabled={!tokenDraft}>复制</button><button className="pill primary" type="button" onClick={saveToken}>保存</button></div>
