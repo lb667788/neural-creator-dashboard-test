@@ -5,7 +5,7 @@ import {posts, monthPosts} from './works';
 import {CONFIG, asset} from '../config';
 import {buildGraph, forceLayout, stats, KINDS} from './graph';
 import {Home} from './Home';
-import {Library, Drafts, Ideas} from './pages';
+import {Library, Drafts, LearningCenter} from './pages';
 import {Count} from './Analysis';
 import {Icon} from './icons';
 import {T} from './theme';
