@@ -97,18 +97,36 @@ export function CreatorData() {
   };
   const addAccount = async e => {e.preventDefault(); setLoading(true); setError(''); setMessage(''); try { const result=await request('account','POST',accountForm); const list=await request('accounts'); setAccounts(list.accounts||[]); setAccountId(result.account_id||''); setAccountForm(emptyAccount); setMessage('账号保存成功'); } catch(err) {setError(err.message);} finally {setLoading(false);} };
   const addAccountSnapshot = e => {e.preventDefault(); submit('account_snapshot', {...snapshotForm, account_id:accountId}, ()=>setSnapshotForm(emptySnapshot));};
-  const addVideo = e => {e.preventDefault(); submit('video', {...videoForm, account_id:accountId}, ()=>setVideoForm(emptyVideo));};
-  const runReview = async () => {
-    if (!selectedVideo) return;
-    setReviewLoading(true); setError(''); setMessage('');
-    try { const result = await request('review','POST',{video_id:selectedVideo}); setReview(result.review); setMessage('DeepSeek 已完成复盘，报告已保存'); }
-    catch(e) { setError('数据已保存，但自动复盘未完成：' + e.message); }
-    finally { setReviewLoading(false); }
+  const runReviewFor = async videoId => {
+    if (!videoId) return;
+    setReviewLoading(true); setError('');
+    try {
+      const result = await request('review','POST',{video_id:videoId});
+      setReview(result.review);
+      setMessage('DeepSeek 已完成分析，作品数据与分析报告均已自动归档');
+    } catch(e) {
+      setError('作品和数据已保存，但自动分析未完成：' + e.message + '。可在作品详情中重新分析。');
+    } finally { setReviewLoading(false); }
   };
-  const addVideoSnapshot = async e => {
-    e.preventDefault(); setLoading(true); setError(''); setMessage('');
-    try { await request('video_snapshot','POST',{...videoSnapshotForm, video_id:selectedVideo}); setVideoSnapshotForm(emptyVideoSnapshot); setMessage('作品数据已保存，正在调用 DeepSeek 自动复盘…'); await runReview(); await refresh(); }
-    catch(err) { setError(err.message); }
+  const runReview = () => runReviewFor(selectedVideo);
+  const addVideoAndAnalyze = async e => {
+    e.preventDefault();
+    if (!accountId) return;
+    setLoading(true); setError(''); setMessage('');
+    try {
+      const created = await request('video','POST',{...videoForm, account_id:accountId});
+      const videoId = created.video_id;
+      await request('video_snapshot','POST',{...videoSnapshotForm, video_id:videoId});
+      setSelectedVideo(videoId);
+      setVideoForm(emptyVideo);
+      setVideoSnapshotForm(emptyVideoSnapshot);
+      setMessage('视频与表现数据已保存，DeepSeek 正在分析…');
+      const [v] = await Promise.all([request('videos','GET',null,{account_id:accountId})]);
+      setVideos(v.videos || []);
+      await runReviewFor(videoId);
+      const vh = await request('video_history','GET',null,{video_id:videoId});
+      setVideoHistory(vh.history || []);
+    } catch(err) { setError(err.message); }
     finally { setLoading(false); }
   };
   const setForm = (setter, field, value) => setter(prev=>({...prev,[field]:value}));
@@ -156,30 +174,25 @@ export function CreatorData() {
           <div className="form-actions"><button className="pill primary" disabled={!token||!accountId||loading}>保存每日数据</button></div>
         </form>
       </section>
-      <section className="glass card creator-card">
-        <header><h2>添加作品 <em>Add video</em></h2></header>
-        <form className="form" onSubmit={addVideo}>
-          {input(setVideoForm,videoForm,'title','作品标题 *')}
-          {input(setVideoForm,videoForm,'share_url','作品链接','url')}
-          {input(setVideoForm,videoForm,'published_at','发布时间','date')}
-          {input(setVideoForm,videoForm,'duration_seconds','时长（秒）','number')}
-          <label>描述<textarea rows="2" value={videoForm.description} onChange={e=>setForm(setVideoForm,'description',e.target.value)}/></label>
-          <div className="form-actions"><button className="pill primary" disabled={!token||!accountId||!videoForm.title.trim()||loading}><Icon name="plus" size={14}/>保存作品</button></div>
-        </form>
-      </section>
-      <section className="glass card creator-card">
-        <header><h2>作品每日记录 <em>Video metrics</em></h2></header>
-        <div className="creator-select"><label>选择作品 <select value={selectedVideo} onChange={e=>setSelectedVideo(e.target.value)}><option value="">选择作品</option>{videos.map(v=><option key={v.id} value={v.id}>{v.title}</option>)}</select></label></div>
-        <form className="form" onSubmit={addVideoSnapshot}>
+      <section className="glass card creator-card creator-analysis-workspace">
+        <header><h2>视频分析与记录 <em>Video Analysis & Archive</em></h2><p className="quiet">一次提交，自动分析并保存作品、数据与复盘历史</p></header>
+        <form className="form" onSubmit={addVideoAndAnalyze}>
           <div className="creator-fields">
-            {input(setVideoSnapshotForm,videoSnapshotForm,'views','播放数','number')}
+            {input(setVideoForm,videoForm,'title','作品标题 *')}
+            {input(setVideoForm,videoForm,'share_url','作品链接（选填）','url','没有链接可留空')}
+            {input(setVideoForm,videoForm,'published_at','发布时间','date')}
+            {input(setVideoForm,videoForm,'duration_seconds','时长（秒）','number')}
+          </div>
+          <label>作品内容 / 描述<textarea rows="2" placeholder="简单描述视频主题、内容和表达方式，帮助 DeepSeek 更准确地分析" value={videoForm.description} onChange={e=>setForm(setVideoForm,'description',e.target.value)}/></label>
+          <div className="creator-fields">
+            {input(setVideoSnapshotForm,videoSnapshotForm,'views','播放量','number')}
             {input(setVideoSnapshotForm,videoSnapshotForm,'likes','点赞','number')}
             {input(setVideoSnapshotForm,videoSnapshotForm,'comments','评论','number')}
             {input(setVideoSnapshotForm,videoSnapshotForm,'shares','分享','number')}
             {input(setVideoSnapshotForm,videoSnapshotForm,'favorites','收藏','number')}
             {input(setVideoSnapshotForm,videoSnapshotForm,'followers_gained','涨粉','number')}
           </div>
-          <div className="form-actions"><button className="pill primary" disabled={!token||!selectedVideo||loading}>保存作品数据</button></div>
+          <div className="form-actions"><button className="pill primary" disabled={!token||!accountId||!videoForm.title.trim()||loading||reviewLoading}><Icon name="spark" size={14}/>{loading||reviewLoading ? '正在保存并分析…' : '提交并开始 AI 分析'}</button></div>
         </form>
       </section>
     </div>
