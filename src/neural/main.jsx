@@ -6,6 +6,7 @@ import {CONFIG, asset} from '../config';
 import {buildGraph, forceLayout, stats, KINDS} from './graph';
 import {Home} from './Home';
 import {Library, Drafts, LearningCenter} from './pages';
+import {CreatorData} from './CreatorData';
 import {Count} from './Analysis';
 import {Icon} from './icons';
 import {T} from './theme';
@@ -44,7 +45,7 @@ function Modal({title, en, onClose, children, wide}) {
   </div>;
 }
 
-const navs = [['home', '工作台', 'Workspace'], ['library', '作品库', 'Works'], ['drafts', '创作台', 'Drafts'], ['ideas', '学习中心', 'Learning Center']];
+const navs = [['home', '工作台', 'Workspace'], ['library', '作品库', 'Works'], ['drafts', '创作台', 'Drafts'], ['ideas', '学习中心', 'Learning Center'], ['creator', '账号数据', 'Creator Data']];
 const initialPage = () => { const h = location.hash.slice(1); return navs.some(n => n[0] === h) ? h : 'home'; };
 
 function Snapshot({goal, onGoal, ideas, drafts, onIdea, onDraft, onLibrary}) {
@@ -152,6 +153,7 @@ function App() {
       {page === 'library' && <Library graph={graph} selected={libSel} setSelected={setLibSel} onGo={openInGraph} onAction={onAction}/>}
       {page === 'drafts' && <Drafts graph={graph} drafts={drafts} setDrafts={setDrafts} active={active} setActive={setActive} onNew={() => newDraft()} onDelete={deleteDraft} onGo={openInGraph}/>}
       {page === 'ideas' && <LearningCenter/>}
+      {page === 'creator' && <CreatorData/>}
     </main>
 
     <footer className="site-foot">
