@@ -194,14 +194,15 @@ export function CreatorData() {
           </div>
           <div className="form-actions"><button className="pill primary" disabled={!token||!accountId||!videoForm.title.trim()||loading||reviewLoading}><Icon name="spark" size={14}/>{loading||reviewLoading ? '正在保存并分析…' : '提交并开始 AI 分析'}</button></div>
         </form>
+        {selectedVideo && <div className="creator-inline-review">
+          <header><h3>本期 AI 复盘 <em>DeepSeek Review</em></h3><button className="text-btn" type="button" onClick={runReview} disabled={!token||reviewLoading}>{reviewLoading ? '分析中…' : '重新分析'}</button></header>
+          {reviewLoading && <div className="empty-line">正在比较本作品与账号历史数据…</div>}
+          {!reviewLoading && review?.report_text && <><p className="quiet">最近分析：{String(review.generated_at).replace('T',' ').slice(0,19)} · 已自动归档</p><div className="creator-ai-report" style={{whiteSpace:'pre-wrap',lineHeight:1.8}}>{review.report_text}</div></>}
+          {!reviewLoading && !review?.report_text && <div className="empty-line">提交作品和表现数据后，DeepSeek 会自动生成复盘。</div>}
+          {videoHistory.length > 0 && <div className="creator-table-wrap"><table><thead><tr><th>记录日期</th><th>播放</th><th>点赞</th><th>评论</th><th>分享</th><th>收藏</th><th>涨粉</th></tr></thead><tbody>{videoHistory.slice(0,10).map(row=><tr key={row.id}><td>{String(row.captured_at).slice(0,10)}</td><td>{nfmt(row.views)}</td><td>{nfmt(row.likes)}</td><td>{nfmt(row.comments)}</td><td>{nfmt(row.shares)}</td><td>{nfmt(row.favorites)}</td><td>{nfmt(row.followers_gained)}</td></tr>)}</tbody></table></div>}
+        </div>}
       </section>
     </div>
-    {selectedVideo && <section className="glass card creator-history creator-ai-review">
-      <header><h2>AI 创作复盘 <em>DeepSeek Review</em></h2><button className="text-btn" onClick={runReview} disabled={!token||reviewLoading}><Icon name="spark" size={14}/>{reviewLoading ? '分析中…' : '重新分析'}</button></header>
-      {reviewLoading && <div className="empty-line">DeepSeek 正在比较本作品与账号历史数据，请稍候…</div>}
-      {!reviewLoading && review?.report_text && <><p className="quiet">最近分析：{String(review.generated_at).replace('T',' ').slice(0,19)} · 已保存到数据库</p><div className="creator-ai-report" style={{whiteSpace:'pre-wrap',lineHeight:1.8}}>{review.report_text}</div></>}
-      {!reviewLoading && !review?.report_text && <div className="empty-line">保存作品数据后，DeepSeek 会自动生成复盘和下一期优化建议。</div>}
-    </section>}
     <section className="glass card creator-history">
       <header><h2>成长历史 <em>Growth history</em></h2><button className="text-btn" onClick={refresh} disabled={!token||loading}><Icon name="replay" size={14}/>刷新 <em>Refresh</em></button></header>
       {historyRows.length ? <div className="creator-table-wrap"><table><thead><tr><th>日期</th><th>粉丝</th><th>关注</th><th>累计获赞</th><th>作品</th><th>播放</th></tr></thead><tbody>{historyRows.map(row=><tr key={row.id}><td>{String(row.captured_at).slice(0,10)}</td><td>{nfmt(row.followers)}</td><td>{nfmt(row.following)}</td><td>{nfmt(row.total_likes)}</td><td>{nfmt(row.total_works)}</td><td>{nfmt(row.total_views)}</td></tr>)}</tbody></table></div> : <div className="empty-line">录入每日数据后，这里将显示历史快照。 <em>Snapshots appear here</em></div>}
@@ -210,9 +211,5 @@ export function CreatorData() {
       <header><h2>作品列表 <em>Video library</em></h2><span className="quiet">{videos.length} 篇作品</span></header>
       {videos.length ? <div className="creator-table-wrap"><table><thead><tr><th>作品标题</th><th>发布时间</th><th>播放</th><th>点赞</th></tr></thead><tbody>{videos.map(v=><tr key={v.id} onClick={()=>setSelectedVideo(v.id)}><td>{v.title}</td><td>{v.published_at||'—'}</td><td>{nfmt(v.latest_views)}</td><td>{nfmt(v.latest_likes)}</td></tr>)}</tbody></table></div> : <div className="empty-line">添加作品后，将会列在这里。 <em>Works appear here</em></div>}
     </section>
-    {selectedVideo && <section className="glass card creator-history">
-      <header><h2>{currentVideo?.title || '作品'} <em>Video snapshots</em></h2><span className="quiet">{videoHistory.length} 条历史记录</span></header>
-      {videoHistory.length ? <div className="creator-table-wrap"><table><thead><tr><th>日期</th><th>播放</th><th>点赞</th><th>评论</th><th>分享</th><th>收藏</th><th>涨粉</th></tr></thead><tbody>{videoHistory.slice(0,20).map(row=><tr key={row.id}><td>{String(row.captured_at).slice(0,10)}</td><td>{nfmt(row.views)}</td><td>{nfmt(row.likes)}</td><td>{nfmt(row.comments)}</td><td>{nfmt(row.shares)}</td><td>{nfmt(row.favorites)}</td><td>{nfmt(row.followers_gained)}</td></tr>)}</tbody></table></div> : <div className="empty-line">保存作品数据后，这里会出现历史记录。 <em>No metrics saved</em></div>}
-    </section>}
   </div>;
 }
