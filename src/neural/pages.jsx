@@ -5,6 +5,7 @@ import {Analysis, Count} from './Analysis';
 import {snapshot} from '../data';
 import {posts} from './works';
 import {T} from './theme';
+import {askLearningTutor} from './ai';
 
 const fmt = v => v == null ? '—' : Number(v).toLocaleString('zh-CN');
 
@@ -218,12 +219,28 @@ export function LearningCenter() {
   const [completed, setCompleted] = useState(() => {
     try { return JSON.parse(localStorage.getItem('neural-learning-progress-v1') || '{}'); } catch { return {}; }
   });
+  const [question, setQuestion] = useState('');
+  const [answer, setAnswer] = useState('');
+  const [asking, setAsking] = useState(false);
   const done = Boolean(completed[dateKey]);
   const toggle = () => {
     const next = {...completed};
     if (done) delete next[dateKey]; else next[dateKey] = lesson.id;
     setCompleted(next);
     try { localStorage.setItem('neural-learning-progress-v1', JSON.stringify(next)); } catch {}
+  };
+  const askTutor = async () => {
+    if (!question.trim() || asking) return;
+    setAsking(true);
+    setAnswer('');
+    try {
+      const reply = await askLearningTutor({question: question.trim(), lesson: lesson.title});
+      setAnswer(reply);
+    } catch (error) {
+      setAnswer(error.message || 'AI 导师暂时不可用，请稍后重试。');
+    } finally {
+      setAsking(false);
+    }
   };
   return <div className="page page-learning">
     <PageHead zh="学习中心" en="Learning Center" sub="每天进步一点，持续构建你的 AI 能力。" subEn="A daily learning path — concepts, hands-on steps and practice."/>
@@ -238,9 +255,16 @@ export function LearningCenter() {
     <div className="learning-grid">
       <section className="learning-panel glass"><header><h3>核心知识 <em>Key concept</em></h3></header><p>{lesson.concept}</p></section>
       <section className="learning-panel glass"><header><h3>实操步骤 <em>How to practice</em></h3></header><ol>{lesson.steps.map((step,i)=><li key={i}>{step}</li>)}</ol></section>
-      <section className="learning-panel learning-exercise glass"><header><h3>今日练习 <em>Daily exercise</em></h3></header><p>{lesson.exercise}</p></section>
+      <section className="learning-panel learning-exercise glass"><header><h3>今日练习 <em>Daily exercise</em></h3></header><p>{lesson.exercise}</p>
+        <div className="learning-tutor">
+          <label htmlFor="learning-answer">把你的答案或疑问交给 AI 导师</label>
+          <textarea id="learning-answer" value={question} onChange={e => setQuestion(e.target.value)} placeholder="写下你的练习答案，或描述你没弄懂的地方…" rows={4}/>
+          <button className="pill primary" onClick={askTutor} disabled={asking || !question.trim()}>{asking ? '导师思考中…' : '提交给 AI 导师'} <em>{asking ? 'Thinking' : 'Ask DeepSeek'}</em></button>
+          {answer && <div className="learning-tutor-answer" aria-live="polite"><strong>导师反馈</strong><p>{answer}</p></div>}
+        </div>
+      </section>
       <section className="learning-panel learning-takeaway glass"><header><h3>今日要点 <em>Takeaway</em></h3></header><p>{lesson.takeaway}</p></section>
     </div>
-    <p className="learning-footnote">课程按日期从 AI 基础、提示词、工具实战到项目实践循序推进。学习记录仅保存在当前浏览器。</p>
+    <p className="learning-footnote">课程按日期从 AI 基础、提示词、工具实战到项目实践循序推进。学习记录仅保存在当前浏览器；AI 导师通过安全服务端连接 DeepSeek。</p>
   </div>;
 }
