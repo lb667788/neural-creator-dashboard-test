@@ -27,6 +27,7 @@ export function CreatorData() {
   const [videoForm, setVideoForm] = useState(emptyVideo);
   const [videoSnapshotForm, setVideoSnapshotForm] = useState(emptyVideoSnapshot);
   const [selectedVideo, setSelectedVideo] = useState('');
+  const [videoEntryMode, setVideoEntryMode] = useState('new');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
@@ -114,8 +115,12 @@ export function CreatorData() {
     if (!accountId) return;
     setLoading(true); setError(''); setMessage('');
     try {
-      const created = await request('video','POST',{...videoForm, account_id:accountId});
-      const videoId = created.video_id;
+      let videoId = selectedVideo;
+      if (videoEntryMode === 'new') {
+        const created = await request('video','POST',{...videoForm, account_id:accountId});
+        videoId = created.video_id;
+      }
+      if (!videoId) throw new Error('请先选择一条已有作品，或切换为新建作品。');
       await request('video_snapshot','POST',{...videoSnapshotForm, video_id:videoId});
       setSelectedVideo(videoId);
       setVideoForm(emptyVideo);
@@ -177,13 +182,16 @@ export function CreatorData() {
       <section className="glass card creator-card creator-analysis-workspace">
         <header><h2>视频分析与记录 <em>Video Analysis & Archive</em></h2><p className="quiet">一次提交，自动分析并保存作品、数据与复盘历史</p></header>
         <form className="form" onSubmit={addVideoAndAnalyze}>
-          <div className="creator-fields">
-            {input(setVideoForm,videoForm,'title','作品标题 *')}
-            {input(setVideoForm,videoForm,'share_url','作品链接（选填）','url','没有链接可留空')}
-            {input(setVideoForm,videoForm,'published_at','发布时间','date')}
-            {input(setVideoForm,videoForm,'duration_seconds','时长（秒）','number')}
-          </div>
-          <label>作品内容 / 描述<textarea rows="2" placeholder="简单描述视频主题、内容和表达方式，帮助 DeepSeek 更准确地分析" value={videoForm.description} onChange={e=>setForm(setVideoForm,'description',e.target.value)}/></label>
+          <div className="creator-select"><label>记录方式 <select value={videoEntryMode} onChange={e=>setVideoEntryMode(e.target.value)}><option value="new">分析新作品</option><option value="existing">更新已有作品数据</option></select></label></div>
+          {videoEntryMode === 'new' ? <>
+            <div className="creator-fields">
+              {input(setVideoForm,videoForm,'title','作品标题 *')}
+              {input(setVideoForm,videoForm,'share_url','作品链接（选填）','url','没有链接可留空')}
+              {input(setVideoForm,videoForm,'published_at','发布时间','date')}
+              {input(setVideoForm,videoForm,'duration_seconds','时长（秒）','number')}
+            </div>
+            <label>作品内容 / 描述<textarea rows="2" placeholder="简单描述视频主题、内容和表达方式，帮助 DeepSeek 更准确地分析" value={videoForm.description} onChange={e=>setForm(setVideoForm,'description',e.target.value)}/></label>
+          </> : <div className="creator-select"><label>选择已有作品 <select value={selectedVideo} onChange={e=>setSelectedVideo(e.target.value)}><option value="">选择作品</option>{videos.map(v=><option key={v.id} value={v.id}>{v.title}</option>)}</select></label></div>}
           <div className="creator-fields">
             {input(setVideoSnapshotForm,videoSnapshotForm,'views','播放量','number')}
             {input(setVideoSnapshotForm,videoSnapshotForm,'likes','点赞','number')}
@@ -192,7 +200,7 @@ export function CreatorData() {
             {input(setVideoSnapshotForm,videoSnapshotForm,'favorites','收藏','number')}
             {input(setVideoSnapshotForm,videoSnapshotForm,'followers_gained','涨粉','number')}
           </div>
-          <div className="form-actions"><button className="pill primary" disabled={!token||!accountId||!videoForm.title.trim()||loading||reviewLoading}><Icon name="spark" size={14}/>{loading||reviewLoading ? '正在保存并分析…' : '提交并开始 AI 分析'}</button></div>
+          <div className="form-actions"><button className="pill primary" disabled={!token||!accountId||(videoEntryMode === 'new' && !videoForm.title.trim())||(videoEntryMode === 'existing' && !selectedVideo)||loading||reviewLoading}><Icon name="spark" size={14}/>{loading||reviewLoading ? '正在保存并分析…' : '提交并开始 AI 分析'}</button></div>
         </form>
         {selectedVideo && <div className="creator-inline-review">
           <header><h3>本期 AI 复盘 <em>DeepSeek Review</em></h3><button className="text-btn" type="button" onClick={runReview} disabled={!token||reviewLoading}>{reviewLoading ? '分析中…' : '重新分析'}</button></header>
