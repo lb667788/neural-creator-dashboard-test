@@ -44,7 +44,7 @@ function Modal({title, en, onClose, children, wide}) {
   </div>;
 }
 
-const navs = [['home', '工作台', 'Workspace'], ['library', '作品库', 'Works'], ['drafts', '创作台', 'Drafts'], ['ideas', '选题池', 'Ideas']];
+const navs = [['home', '工作台', 'Workspace'], ['library', '作品库', 'Works'], ['drafts', '创作台', 'Drafts'], ['ideas', '学习中心', 'Learning Center']];
 const initialPage = () => { const h = location.hash.slice(1); return navs.some(n => n[0] === h) ? h : 'home'; };
 
 function Snapshot({goal, onGoal, ideas, drafts, onIdea, onDraft, onLibrary}) {
@@ -151,7 +151,7 @@ function App() {
       </>}
       {page === 'library' && <Library graph={graph} selected={libSel} setSelected={setLibSel} onGo={openInGraph} onAction={onAction}/>}
       {page === 'drafts' && <Drafts graph={graph} drafts={drafts} setDrafts={setDrafts} active={active} setActive={setActive} onNew={() => newDraft()} onDelete={deleteDraft} onGo={openInGraph}/>}
-      {page === 'ideas' && <Ideas graph={graph} ideas={ideas} onEdit={editIdea} onGraph={openInGraph} onNew={() => editIdea({id: Math.max(0, ...ideas.map(i => i.id)) + 1, title: '', platform: '小红书', priority: '中', status: '待写', note: ''})}/>}
+      {page === 'ideas' && <LearningCenter/>}
     </main>
 
     <footer className="site-foot">
