@@ -20,6 +20,8 @@ export function CreatorData() {
   const [videos, setVideos] = useState([]);
   const [accountHistory, setAccountHistory] = useState([]);
   const [videoHistory, setVideoHistory] = useState([]);
+  const [review, setReview] = useState(null);
+  const [reviewLoading, setReviewLoading] = useState(false);
   const [accountForm, setAccountForm] = useState(emptyAccount);
   const [snapshotForm, setSnapshotForm] = useState(emptySnapshot);
   const [videoForm, setVideoForm] = useState(emptyVideo);
@@ -71,8 +73,9 @@ export function CreatorData() {
     return ()=>{active=false;};
   }, [accountId, token, request]);
   useEffect(() => {
-    if (!token || !selectedVideo) {setVideoHistory([]); return;}
+    if (!token || !selectedVideo) {setVideoHistory([]); setReview(null); return;}
     request('video_history','GET',null,{video_id:selectedVideo}).then(r=>setVideoHistory(r.history||[])).catch(e=>setError(e.message));
+    request('latest_review','GET',null,{video_id:selectedVideo}).then(r=>setReview(r.review||null)).catch(e=>setError(e.message));
   }, [selectedVideo, token, request]);
 
   const currentAccount = accounts.find(a=>a.id===accountId);
@@ -95,7 +98,19 @@ export function CreatorData() {
   const addAccount = async e => {e.preventDefault(); setLoading(true); setError(''); setMessage(''); try { const result=await request('account','POST',accountForm); const list=await request('accounts'); setAccounts(list.accounts||[]); setAccountId(result.account_id||''); setAccountForm(emptyAccount); setMessage('账号保存成功'); } catch(err) {setError(err.message);} finally {setLoading(false);} };
   const addAccountSnapshot = e => {e.preventDefault(); submit('account_snapshot', {...snapshotForm, account_id:accountId}, ()=>setSnapshotForm(emptySnapshot));};
   const addVideo = e => {e.preventDefault(); submit('video', {...videoForm, account_id:accountId}, ()=>setVideoForm(emptyVideo));};
-  const addVideoSnapshot = e => {e.preventDefault(); submit('video_snapshot', {...videoSnapshotForm, video_id:selectedVideo}, ()=>setVideoSnapshotForm(emptyVideoSnapshot));};
+  const runReview = async () => {
+    if (!selectedVideo) return;
+    setReviewLoading(true); setError(''); setMessage('');
+    try { const result = await request('review','POST',{video_id:selectedVideo}); setReview(result.review); setMessage('DeepSeek 已完成复盘，报告已保存'); }
+    catch(e) { setError('数据已保存，但自动复盘未完成：' + e.message); }
+    finally { setReviewLoading(false); }
+  };
+  const addVideoSnapshot = async e => {
+    e.preventDefault(); setLoading(true); setError(''); setMessage('');
+    try { await request('video_snapshot','POST',{...videoSnapshotForm, video_id:selectedVideo}); setVideoSnapshotForm(emptyVideoSnapshot); setMessage('作品数据已保存，正在调用 DeepSeek 自动复盘…'); await runReview(); await refresh(); }
+    catch(err) { setError(err.message); }
+    finally { setLoading(false); }
+  };
   const setForm = (setter, field, value) => setter(prev=>({...prev,[field]:value}));
   const input = (setter, obj, field, label, type='text', placeholder='') => <label>{label}<input type={type} value={obj[field]} placeholder={placeholder} onChange={e=>setForm(setter,field,e.target.value)} /></label>;
   const historyRows = useMemo(()=>accountHistory.slice(0,12),[accountHistory]);
@@ -168,6 +183,12 @@ export function CreatorData() {
         </form>
       </section>
     </div>
+    {selectedVideo && <section className="glass card creator-history creator-ai-review">
+      <header><h2>AI 创作复盘 <em>DeepSeek Review</em></h2><button className="text-btn" onClick={runReview} disabled={!token||reviewLoading}><Icon name="spark" size={14}/>{reviewLoading ? '分析中…' : '重新分析'}</button></header>
+      {reviewLoading && <div className="empty-line">DeepSeek 正在比较本作品与账号历史数据，请稍候…</div>}
+      {!reviewLoading && review?.report_text && <><p className="quiet">最近分析：{String(review.generated_at).replace('T',' ').slice(0,19)} · 已保存到数据库</p><div className="creator-ai-report" style={{whiteSpace:'pre-wrap',lineHeight:1.8}}>{review.report_text}</div></>}
+      {!reviewLoading && !review?.report_text && <div className="empty-line">保存作品数据后，DeepSeek 会自动生成复盘和下一期优化建议。</div>}
+    </section>}
     <section className="glass card creator-history">
       <header><h2>成长历史 <em>Growth history</em></h2><button className="text-btn" onClick={refresh} disabled={!token||loading}><Icon name="replay" size={14}/>刷新 <em>Refresh</em></button></header>
       {historyRows.length ? <div className="creator-table-wrap"><table><thead><tr><th>日期</th><th>粉丝</th><th>关注</th><th>累计获赞</th><th>作品</th><th>播放</th></tr></thead><tbody>{historyRows.map(row=><tr key={row.id}><td>{String(row.captured_at).slice(0,10)}</td><td>{nfmt(row.followers)}</td><td>{nfmt(row.following)}</td><td>{nfmt(row.total_likes)}</td><td>{nfmt(row.total_works)}</td><td>{nfmt(row.total_views)}</td></tr>)}</tbody></table></div> : <div className="empty-line">录入每日数据后，这里将显示历史快照。 <em>Snapshots appear here</em></div>}
