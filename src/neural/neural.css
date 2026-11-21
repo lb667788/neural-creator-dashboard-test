@@ -513,3 +513,14 @@ button.chip:hover { background: color-mix(in srgb, var(--kc, #9db3af) 22%, trans
   .learning-grid { grid-template-columns:1fr; gap:10px; }
   .learning-panel { min-height:0; padding:16px; }
 }
+
+/* Learning tutor additions — keep the original page layout and visual language. */
+.learning-tutor { display:grid; gap:10px; margin-top:16px; padding-top:14px; border-top:1px solid var(--line); }
+.learning-tutor label { color:var(--text-2); font-size:12px; }
+.learning-tutor textarea { width:100%; min-height:92px; resize:vertical; box-sizing:border-box; padding:11px 12px; border:1px solid var(--line-2); border-radius:10px; outline:none; background:rgba(0,0,0,.18); color:var(--text); font:inherit; font-size:13px; line-height:1.65; }
+.learning-tutor textarea:focus { border-color:var(--gold); box-shadow:0 0 0 2px rgba(230,207,152,.1); }
+.learning-tutor textarea::placeholder { color:var(--muted); }
+.learning-tutor .pill:disabled { opacity:.5; cursor:not-allowed; }
+.learning-tutor-answer { padding:12px 14px; border:1px solid var(--line); border-radius:10px; background:rgba(255,255,255,.025); }
+.learning-tutor-answer strong { display:block; margin-bottom:7px; color:var(--gold); font-size:12px; }
+.learning-tutor-answer p { white-space:pre-wrap; overflow-wrap:anywhere; }
