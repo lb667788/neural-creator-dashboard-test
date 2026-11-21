@@ -88,7 +88,7 @@ export function CreatorData() {
     catch(e){setError(e.message);}
     finally {setLoading(false);}
   };
-  const addAccount = e => {e.preventDefault(); submit('account', accountForm, ()=>setAccountForm(emptyAccount));};
+  const addAccount = async e => {e.preventDefault(); setLoading(true); setError(''); setMessage(''); try { const result=await request('account','POST',accountForm); setAccountId(result.account_id || ''); setAccountForm(emptyAccount); setMessage('账号保存成功'); await refresh(); } catch(err) {setError(err.message);} finally {setLoading(false);} };
   const addAccountSnapshot = e => {e.preventDefault(); submit('account_snapshot', {...snapshotForm, account_id:accountId}, ()=>setSnapshotForm(emptySnapshot));};
   const addVideo = e => {e.preventDefault(); submit('video', {...videoForm, account_id:accountId}, ()=>setVideoForm(emptyVideo));};
   const addVideoSnapshot = e => {e.preventDefault(); submit('video_snapshot', {...videoSnapshotForm, video_id:selectedVideo}, ()=>setVideoSnapshotForm(emptyVideoSnapshot));};
