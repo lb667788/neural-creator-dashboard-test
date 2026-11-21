@@ -77,6 +77,8 @@ export function CreatorData() {
   const currentVideo = videos.find(v=>v.id===selectedVideo);
   const latest = accountHistory[0] || {};
   const latestVideo = videoHistory[0] || {};
+  const generateToken = () => { const bytes=new Uint8Array(32); window.crypto.getRandomValues(bytes); const value=Array.from(bytes,b=>b.toString(16).padStart(2,'0')).join(''); setTokenDraft(value); setMessage('已生成随机令牌，请复制并添加到 Cloudflare Secret 后再保存'); setError(''); };
+  const copyToken = async () => { try { await navigator.clipboard.writeText(tokenDraft); setMessage('令牌已复制'); setError(''); } catch { setError('复制失败，请长按输入框手动复制'); } };
   const saveToken = () => {
     const value = tokenDraft.trim();
     try { localStorage.setItem(STORAGE, value); } catch {}
@@ -100,7 +102,7 @@ export function CreatorData() {
     <PageHead zh="账号数据" en="Creator Data" sub="把每次成长记录下来。" subEn="Manual records, private trends — no platform scraping."/>
     <section className="creator-token glass">
       <div><h3><Icon name="lock" size={14}/>私人数据连接 <em>Private access</em></h3><p>数据接口需要你在 Cloudflare 设置访问密钥。密钥仅保存于当前浏览器。</p></div>
-      <div className="creator-token-input"><input type="password" autoComplete="off" placeholder="粘贴 CREATOR_DATA_API_TOKEN" value={tokenDraft} onChange={e=>setTokenDraft(e.target.value)}/><button className="pill primary" onClick={saveToken}>保存令牌</button></div>
+      <div className="creator-token-input"><input type="password" autoComplete="off" placeholder="生成或粘贴 CREATOR_DATA_API_TOKEN" value={tokenDraft} onChange={e=>setTokenDraft(e.target.value}/><button className="pill" type="button" onClick={generateToken}>生成</button><button className="pill" type="button" onClick={copyToken} disabled={!tokenDraft}>复制</button><button className="pill primary" type="button" onClick={saveToken}>保存</button></div>
     </section>
     {!token && <div className="creator-notice glass"><Icon name="info" size={15}/>尚未设置访问令牌。请先在 Cloudflare Pages 添加同名 Secret，之后在此处粘贴对应令牌。</div>}
     {message && <div className="creator-notice glass success"><Icon name="check" size={15}/>{message}</div>}
