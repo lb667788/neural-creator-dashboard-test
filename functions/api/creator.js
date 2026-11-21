@@ -109,6 +109,46 @@ export async function onRequest({ request, env }) {
       return json({ history: results || [] });
     }
 
+    if (request.method === "GET" && action === "latest_review") {
+      const videoId = clean(url.searchParams.get("video_id"), 80);
+      const video = await env.DB.prepare("SELECT id FROM creator_videos WHERE id=? AND owner_id=?").bind(videoId, OWNER_ID).first();
+      if (!video) return json({ error: "作品不存在。" }, 404);
+      const review = await env.DB.prepare("SELECT id, report_text, generated_at FROM creator_ai_reviews WHERE owner_id=? AND video_id=? ORDER BY generated_at DESC LIMIT 1").bind(OWNER_ID, videoId).first();
+      return json({ review: review || null });
+    }
+
+    if (request.method === "POST" && action === "review") {
+      if (!env.DEEPSEEK_API_KEY) return json({ error: "服务端尚未配置 DeepSeek API Key。" }, 503);
+      const videoId = clean(body.video_id, 80);
+      const video = await env.DB.prepare("SELECT v.*, a.display_name AS account_name FROM creator_videos v JOIN creator_accounts a ON a.id=v.account_id WHERE v.id=? AND v.owner_id=?").bind(videoId, OWNER_ID).first();
+      if (!video) return json({ error: "作品不存在。" }, 404);
+      const [snapshots, history, accountHistory] = await Promise.all([
+        env.DB.prepare("SELECT captured_at, views, likes, comments, shares, favorites, followers_gained FROM creator_video_snapshots WHERE owner_id=? AND video_id=? ORDER BY captured_at DESC LIMIT 20").bind(OWNER_ID, videoId).all(),
+        env.DB.prepare("SELECT v.title, v.description, v.published_at, s.views, s.likes, s.comments, s.shares, s.favorites, s.followers_gained, s.captured_at FROM creator_videos v LEFT JOIN creator_video_snapshots s ON s.video_id=v.id WHERE v.owner_id=? AND v.account_id=? ORDER BY COALESCE(s.captured_at,v.published_at) DESC LIMIT 40").bind(OWNER_ID, video.account_id).all(),
+        env.DB.prepare("SELECT captured_at, followers, following, total_likes, total_works, total_views FROM creator_account_snapshots WHERE owner_id=? AND account_id=? ORDER BY captured_at DESC LIMIT 20").bind(OWNER_ID, video.account_id).all()
+      ]);
+      const payload = {
+        account: video.account_name,
+        current_video: { title: video.title, description: video.description, published_at: video.published_at, duration_seconds: video.duration_seconds, share_url: video.share_url, snapshots: snapshots.results || [] },
+        historical_videos: history.results || [],
+        account_history: accountHistory.results || []
+      };
+      const systemPrompt = "你是专业的中文短视频内容策略分析师。请基于用户提供的真实手动录入数据做复盘。严格区分数据事实与推测；不要把相关性说成因果，不要虚构完播率、点击率或视频内容细节。数据不足时明确指出，并告诉用户补充什么。将作品当前数据与该账号历史作品比较，考虑发布时间、数据采集时点和样本量。输出清晰、具体、可执行的中文报告，包含：一、本期数据表现（列出关键指标及可计算的互动率/涨粉转化率）；二、与账号历史作品的比较；三、表现亮点；四、问题与可能原因（标明推测）；五、下一期建议（选题方向、前三秒开场钩子、内容结构、标题示例、行动引导）；六、下次需要重点观察的指标。建议必须结合本账号数据，避免空泛套路。";
+      const upstream = await fetch("https://api.deepseek.com/chat/completions", {
+        method: "POST",
+        headers: { "Authorization": "Bearer " + env.DEEPSEEK_API_KEY, "Content-Type": "application/json" },
+        body: JSON.stringify({ model: "deepseek-chat", messages: [{ role: "system", content: systemPrompt }, { role: "user", content: "请复盘以下账号和作品数据，并给出下一期优化方案：\\n" + JSON.stringify(payload) }], temperature: 0.4, max_tokens: 2400 })
+      });
+      const data = await upstream.json().catch(() => ({}));
+      if (!upstream.ok) return json({ error: upstream.status === 401 ? "DeepSeek API Key 无效，请检查 Cloudflare Secret。" : "DeepSeek 暂时无法完成复盘，请稍后重试。" }, 502);
+      const report = data?.choices?.[0]?.message?.content;
+      if (typeof report !== "string" || !report.trim()) return json({ error: "DeepSeek 返回了空复盘报告。" }, 502);
+      const reviewId = id();
+      const generatedAt = new Date().toISOString();
+      await env.DB.prepare("INSERT INTO creator_ai_reviews (id, owner_id, account_id, video_id, report_text, generated_at, model) VALUES (?, ?, ?, ?, ?, ?, 'deepseek-chat')").bind(reviewId, OWNER_ID, video.account_id, videoId, report.trim(), generatedAt).run();
+      return json({ ok: true, review: { id: reviewId, report_text: report.trim(), generated_at: generatedAt } });
+    }
+
     if (request.method === "POST" && action === "import_record") {
       const accountId = clean(body.account_id, 80);
       const account = await env.DB.prepare("SELECT id FROM creator_accounts WHERE id=? AND owner_id=?").bind(accountId, OWNER_ID).first();
