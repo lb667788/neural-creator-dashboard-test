@@ -188,3 +188,59 @@ export function Ideas({graph, ideas, onEdit, onNew, onGraph}) {
     })}</div>
   </div>;
 }
+
+
+// —— 每日学习中心 Learning Center ——
+const DAILY_LESSONS = [
+  {id:'ai-basics',title:'认识生成式 AI：它能做什么，不能做什么',tag:'AI 基础',level:'入门',goal:'建立正确的 AI 使用认知。',concept:'生成式 AI 会根据上下文预测并生成内容。它擅长归纳、改写、解释和提出方案，但可能把错误信息说得很确定。',steps:['把任务说清楚：你要完成什么。','补充背景：对象、场景、已有资料。','明确限制：篇幅、语气、格式和不能做的事。','核对事实：重要数字、日期和来源要复查。'],exercise:'让 AI 用 3 种难度解释一个你熟悉的概念，再检查哪一处解释最准确。',takeaway:'把 AI 当作协作工具，而不是事实来源。'},
+  {id:'prompt-framework',title:'掌握提示词四要素：角色、任务、背景、格式',tag:'提示词实战',level:'入门',goal:'写出更清楚、可复用的指令。',concept:'高质量提示词通常包含角色、任务、背景和输出格式。需要时再补充示例、约束和评价标准。',steps:['角色：说明希望 AI 以什么专业视角协助。','任务：用动词描述具体交付物。','背景：提供必要资料和目标受众。','格式：规定列表、表格、字数或结构。'],exercise:'把“帮我学英语”改写成包含四要素的提示词，并要求给出 15 分钟练习。',takeaway:'指令越具体，结果越容易检查和迭代。'},
+  {id:'fact-check',title:'让 AI 回答更可靠：事实核查与来源意识',tag:'AI 素养',level:'入门',goal:'识别幻觉并降低错误风险。',concept:'模型可能生成看似合理但并不真实的细节。涉及医疗、法律、财务、实时新闻或关键决策时，必须查验可靠来源。',steps:['把事实问题和创意任务分开。','要求列出可核验的来源与发布日期。','打开原始来源核对关键句和数据。','找不到可靠证据时，明确标注未知。'],exercise:'向 AI 提问一个近期事实问题，逐条检查回答中的日期、数字和出处。',takeaway:'流畅不等于正确；证据比语气重要。'},
+  {id:'research',title:'用 AI 做高效资料研究：从问题到结论',tag:'研究方法',level:'进阶',goal:'把宽泛主题拆成可研究的问题。',concept:'研究的关键不是一次问出答案，而是拆分问题、收集证据、比较观点并形成有边界的结论。',steps:['先定义研究目标和时间范围。','把主题拆成 3—5 个子问题。','分别收集官方资料、专业报道和不同观点。','记录来源、日期、证据强度与未解决问题。'],exercise:'选一个你感兴趣的 AI 工具，列出它的核心功能、价格、限制和适用人群四个研究问题。',takeaway:'先建立证据结构，再写总结。'},
+  {id:'writing',title:'AI 辅助写作：从大纲到高质量初稿',tag:'内容创作',level:'入门',goal:'用 AI 提高写作效率，同时保留个人判断。',concept:'写作流程可拆为选题、受众分析、结构设计、初稿、事实核对和润色。不要让模型替代你的真实经验。',steps:['写清楚读者是谁、读完要获得什么。','先生成 3 种文章结构并选择其一。','提供真实案例、数据或个人观点。','分段生成，再统一语气并核查事实。'],exercise:'选一个主题，让 AI 给出三种不同结构；比较哪一种最适合目标读者。',takeaway:'你的经验和观点，是内容最重要的差异化。'},
+  {id:'image-ai',title:'AI 图像工具入门：描述画面而不是堆砌形容词',tag:'AI 工具实战',level:'入门',goal:'学会把视觉想法转成可执行描述。',concept:'图像提示词可以按主体、场景、构图、光线、材质、色彩和画面比例组织。先确定主体与构图，再补充风格细节。',steps:['主体：画面最重要的对象是什么。','场景：它在哪里、正在做什么。','构图：远景/近景、视角、主体位置。','光线与色彩：明确主光方向和色彩关系。'],exercise:'描述一张“桌面上的未来感学习终端”概念图，分别写出主体、构图、光线和材质。',takeaway:'清晰的视觉结构比一长串风格词更有用。'},
+  {id:'automation',title:'认识 AI 自动化：把重复步骤变成工作流',tag:'效率提升',level:'进阶',goal:'找到适合自动化的重复任务。',concept:'自动化适合规则明确、重复发生、输入输出稳定的工作。涉及付款、发布或删除等高风险动作时，应加入人工确认。',steps:['记录一项重复工作从开始到结束的步骤。','找出固定输入、判断条件和输出结果。','先自动化低风险、可回滚的部分。','设置失败提醒、日志和人工审核。'],exercise:'画出“收到学习资料—提取重点—生成摘要—保存笔记”的四步流程。',takeaway:'先把流程理清，再决定是否需要自动化。'},
+  {id:'coding',title:'让 AI 帮你理解代码：先读懂，再修改',tag:'编程入门',level:'进阶',goal:'学会安全地使用 AI 辅助编程。',concept:'代码修改应围绕明确目标进行。先定位文件和组件，理解依赖，再做最小变更并运行测试。',steps:['描述现象、预期结果和复现步骤。','定位相关文件与组件边界。','要求给出最小修改方案和影响范围。','运行构建或测试，检查差异和回归。'],exercise:'找一个你使用的网站按钮，尝试描述它的点击行为、输入、输出和可能的状态。',takeaway:'小步修改、验证结果，避免无关重构。'},
+  {id:'data',title:'用 AI 分析表格：先定义指标，再解释结果',tag:'数据分析',level:'进阶',goal:'避免只看数字、不看口径。',concept:'数据分析要先理解字段含义、单位、缺失值和统计口径。相关性不等于因果关系。',steps:['说明每列代表什么、单位是什么。','检查重复值、空值和异常值。','定义要回答的问题和比较指标。','把结论、证据和局限分开表达。'],exercise:'设计一个记录每日学习时长的表格，写出你最想观察的两个指标。',takeaway:'先确认数据质量和指标定义，再解释趋势。'},
+  {id:'video',title:'AI 视频创作流程：脚本、分镜与一致性',tag:'AI 工具实战',level:'进阶',goal:'理解 AI 视频制作的基本工作流。',concept:'视频生成通常需要把创意拆成镜头，并控制主体、场景、动作和镜头运动的一致性。',steps:['先写一句话创意和目标观众。','把故事拆成 3—6 个镜头。','为每个镜头写主体、动作、景别和运镜。','检查人物、服装、场景和时间连续性。'],exercise:'把“机器人在雨夜街道寻找信号”拆成三个连续镜头。',takeaway:'先做好分镜，再生成素材，最后剪辑。'},
+  {id:'security',title:'AI 使用安全：隐私、权限与敏感资料',tag:'安全与隐私',level:'入门',goal:'建立安全使用 AI 工具的习惯。',concept:'不要把密码、验证码、身份证件、私人密钥或未经授权的个人资料输入不可信服务。使用工具前应检查数据权限和隐私说明。',steps:['识别资料是否包含个人或机密信息。','只提供完成任务所需的最少内容。','对外部工具检查权限范围和数据政策。','分享或发布前人工复核输出。'],exercise:'检查你常用的一个 AI 工具，找出它请求了哪些权限，并判断是否必要。',takeaway:'最小化数据暴露，谨慎授予权限。'},
+  {id:'iteration',title:'让 AI 输出变好：用评价标准进行迭代',tag:'提示词实战',level:'进阶',goal:'把“感觉不够好”变成可执行反馈。',concept:'迭代时应指出具体问题，并给出可观察的评价标准，例如准确性、完整性、可读性、语气和格式。',steps:['先定义什么样的结果算合格。','指出当前版本具体缺失或错误之处。','一次只调整一到两个关键维度。','对比修改前后是否达到标准。'],exercise:'让 AI 写一段 100 字介绍，再从准确、清楚、有吸引力三个维度给出修改意见。',takeaway:'具体反馈比简单说“再优化一下”有效。'},
+  {id:'workflow',title:'设计你的个人 AI 学习工作流',tag:'实战项目',level:'进阶',goal:'把零散工具组合成稳定流程。',concept:'个人工作流由目标、输入、步骤、工具、输出和复盘构成。流程应足够简单，能够持续执行。',steps:['选一个真实且频繁发生的任务。','写下输入资料和最终交付物。','拆分步骤并为每一步选择合适工具。','记录耗时、质量和需要人工判断的节点。'],exercise:'设计一个每周学习工作流：收集主题、学习资料、做笔记、完成练习、复盘。',takeaway:'工具服务于流程，不要为了用工具而增加步骤。'},
+  {id:'api',title:'理解 API：让不同 AI 服务连接起来',tag:'技术基础',level:'进阶',goal:'理解 API 在 AI 应用中的作用。',concept:'API 是软件之间约定好的通信接口。客户端发送请求，服务端处理后返回数据；密钥应保存在服务端，不能写进公开前端代码。',steps:['理解请求地址、方法和参数。','了解 JSON 请求体与响应结构。','区分前端展示和服务端调用。','把密钥放在安全的环境变量中。'],exercise:'用自己的话解释：网页前端为什么不应该直接暴露 AI API Key？',takeaway:'接口负责通信，密钥必须受到保护。'},
+  {id:'evaluation',title:'评估 AI 工具：别只看演示效果',tag:'工具选择',level:'进阶',goal:'建立适合自己的工具评估框架。',concept:'工具选择要考虑任务质量、稳定性、速度、成本、隐私、可导出性和学习成本，而不只是宣传演示。',steps:['列出你真正要完成的任务。','用相同输入测试候选工具。','记录质量、耗时、价格和限制。','根据使用频率和风险做选择。'],exercise:'选两个你用过的 AI 助手，用同一道任务比较它们的结果。',takeaway:'用真实任务测试，不要只看营销演示。'},
+  {id:'capstone',title:'阶段实战：完成一个可展示的 AI 小项目',tag:'实战项目',level:'项目实践',goal:'把本阶段知识整合成一个成果。',concept:'一个合格的小项目需要明确用户、问题、输入、处理步骤和可验证的输出。先做最小可用版本，再逐步完善。',steps:['选择一个具体问题和目标用户。','定义最小功能，不要一开始做得太大。','用 AI 辅助完成资料、设计或代码。','测试真实场景并记录下一步改进。'],exercise:'设计一个“个人学习助手”：输入学习主题，输出学习计划、知识卡片和练习题。',takeaway:'完成一个小而真实的项目，比收藏很多工具更有价值。'}
+];
+
+export function LearningCenter() {
+  const today = new Date();
+  const dateKey = [today.getFullYear(), String(today.getMonth()+1).padStart(2,'0'), String(today.getDate()).padStart(2,'0')].join('-');
+  const dayNumber = Math.floor(new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime() / 86400000);
+  const lesson = DAILY_LESSONS[((dayNumber % DAILY_LESSONS.length) + DAILY_LESSONS.length) % DAILY_LESSONS.length];
+  const [completed, setCompleted] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('neural-learning-progress-v1') || '{}'); } catch { return {}; }
+  });
+  const done = Boolean(completed[dateKey]);
+  const toggle = () => {
+    const next = {...completed};
+    if (done) delete next[dateKey]; else next[dateKey] = lesson.id;
+    setCompleted(next);
+    try { localStorage.setItem('neural-learning-progress-v1', JSON.stringify(next)); } catch {}
+  };
+  return <div className="page page-learning">
+    <PageHead zh="学习中心" en="Learning Center" sub="每天进步一点，持续构建你的 AI 能力。" subEn="A daily learning path — concepts, hands-on steps and practice."/>
+    <section className="learning-today glass">
+      <div className="learning-kicker"><span>DAILY LEARNING</span><span>{dateKey}</span></div>
+      <div className="learning-hero-row">
+        <div><p className="learning-tag">{lesson.tag} · {lesson.level}</p><h2>{lesson.title}</h2><p className="learning-goal">{lesson.goal}</p></div>
+        <div className="learning-day"><strong>{String(dayNumber % 365 + 1).padStart(2,'0')}</strong><span>DAY</span></div>
+      </div>
+      <div className="learning-status"><span><i className={done ? 'is-done' : ''}/>{done ? '今日已完成' : '今日学习进行中'}</span><button className="pill primary" onClick={toggle}>{done ? '撤销完成' : '标记今日完成'} <em>{done ? 'Undo' : 'Complete'}</em></button></div>
+    </section>
+    <div className="learning-grid">
+      <section className="learning-panel glass"><header><h3>核心知识 <em>Key concept</em></h3></header><p>{lesson.concept}</p></section>
+      <section className="learning-panel glass"><header><h3>实操步骤 <em>How to practice</em></h3></header><ol>{lesson.steps.map((step,i)=><li key={i}>{step}</li>)}</ol></section>
+      <section className="learning-panel learning-exercise glass"><header><h3>今日练习 <em>Daily exercise</em></h3></header><p>{lesson.exercise}</p></section>
+      <section className="learning-panel learning-takeaway glass"><header><h3>今日要点 <em>Takeaway</em></h3></header><p>{lesson.takeaway}</p></section>
+    </div>
+    <p className="learning-footnote">课程按日期从 AI 基础、提示词、工具实战到项目实践循序推进。学习记录仅保存在当前浏览器。</p>
+  </div>;
+}
