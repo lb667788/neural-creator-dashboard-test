@@ -10,7 +10,7 @@ const nfmt = v => v == null ? '—' : Number(v).toLocaleString('zh-CN');
 const emptyAccount = {display_name:'', platform_account_id:'', profile_url:'', avatar_url:'', bio:''};
 const emptySnapshot = {followers:'', following:'', total_likes:'', total_works:'', total_views:''};
 const emptyVideo = {title:'', description:'', share_url:'', published_at:'', duration_seconds:''};
-const emptyVideoSnapshot = {views:'', likes:'', comments:'', shares:'', favorites:'', followers_gained:''};
+const emptyVideoSnapshot = {views:'', likes:'', comments:'', shares:'', favorites:'', followers_gained:'', cover_ctr:'', two_sec_exit_rate:'', three_sec_retention:'', five_sec_retention:'', avg_watch_seconds:'', completion_rate:'', rewatch_rate:''};
 
 export function CreatorData() {
   const [token, setToken] = useState(() => { try { return localStorage.getItem(STORAGE) || ''; } catch { return ''; } });
@@ -200,7 +200,15 @@ export function CreatorData() {
             {input(setVideoSnapshotForm,videoSnapshotForm,'favorites','收藏','number')}
             {input(setVideoSnapshotForm,videoSnapshotForm,'followers_gained','涨粉','number')}
           </div>
-          <div className="form-actions"><button className="pill primary" disabled={!token||!accountId||(videoEntryMode === 'new' && !videoForm.title.trim())||(videoEntryMode === 'existing' && !selectedVideo)||loading||reviewLoading}><Icon name="spark" size={14}/>{loading||reviewLoading ? '正在保存并分析…' : '提交并开始 AI 分析'}</button></div>
+          <div className="quiet" style={{marginTop:8}}>观看质量指标（选填 · 从抖音作品数据中手动填写）</div><div className="creator-fields">
+{input(setVideoSnapshotForm,videoSnapshotForm,'cover_ctr','封面点击率 (%)','number')}
+{input(setVideoSnapshotForm,videoSnapshotForm,'two_sec_exit_rate','2秒跳出率 (%)','number')}
+{input(setVideoSnapshotForm,videoSnapshotForm,'three_sec_retention','3秒留存率 (%)','number')}
+{input(setVideoSnapshotForm,videoSnapshotForm,'five_sec_retention','5秒留存率 (%)','number')}
+{input(setVideoSnapshotForm,videoSnapshotForm,'avg_watch_seconds','平均播放时长 (秒)','number')}
+{input(setVideoSnapshotForm,videoSnapshotForm,'completion_rate','整体完播率 (%)','number')}
+{input(setVideoSnapshotForm,videoSnapshotForm,'rewatch_rate','回看率 (%)','number')}
+</div><div className="form-actions"><button className="pill primary" disabled={!token||!accountId||(videoEntryMode === 'new' && !videoForm.title.trim())||(videoEntryMode === 'existing' && !selectedVideo)||loading||reviewLoading}><Icon name="spark" size={14}/>{loading||reviewLoading ? '正在保存并分析…' : '提交并开始 AI 分析'}</button></div>
         </form>
         {selectedVideo && <div className="creator-inline-review">
           <header><h3>本期 AI 复盘 <em>DeepSeek Review</em></h3><button className="text-btn" type="button" onClick={runReview} disabled={!token||reviewLoading}>{reviewLoading ? '分析中…' : '重新分析'}</button></header>
